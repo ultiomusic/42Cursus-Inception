@@ -1,12 +1,15 @@
-FROM debian:buster
-
-RUN apt-get update && apt-get install -y mariadb-server
+FROM debian:bullseye
 
 EXPOSE 3306
 
+RUN apt update && apt upgrade -y
+RUN apt install -y mariadb-server
+
 COPY ./conf/50-server.cnf /etc/mysql/mariadb.conf.d/
-COPY ./tools /var/www/
+COPY tools/init-edit.sh /tmp/init-edit.sh
 
-RUN service mysql start && mysql < /var/www/initial_db.sql && rm -f /var/www/initial_db.sql;
+RUN  chmod +x /tmp/init-edit.sh
 
-CMD ["mysqld"]
+ENTRYPOINT  ["/bin/bash", "/tmp/init-edit.sh"]
+
+CMD ["mysqld_safe"]

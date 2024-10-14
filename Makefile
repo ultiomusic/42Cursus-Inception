@@ -1,17 +1,25 @@
-DC := docker-compose -f ./srcs/docker-compose.yml
+DC := docker-compose -f srcs/docker-compose.yml
+DB_PATH = /home/beeligul/data
 
-all:
-	@mkdir -p /home/data/wordpress
-	@mkdir -p /home/data/mysql
+all:	set_path
+	@mkdir -p $(DB_PATH)
+	@mkdir -p $(DB_PATH)/wordpress
+	@mkdir -p $(DB_PATH)/mariadb
 	@$(DC) up -d --build
 
 down:
 	@$(DC) down
 
-re: clean all
+clean: down
+	@docker volume rm $(shell docker volume ls -q) || true
+	@docker network prune --force || true
 
-clean:
-	@$(DC) down -v --remove-orphans     # Down ile konteynerleri durdurur ve bağlı volumeleri kaldırır
-	@docker rmi -f $$(docker images -q) # Kullanılmayan imajları siler
+fclean: clean
+	@sudo rm -rf data
+	
+set_path:
+	@sed -i '/^DB_PATH=/c\DB_PATH=$(DB_PATH)' ./srcs/.env
 
-.PHONY: all down re clean
+re: down all
+
+.PHONY: all down re
